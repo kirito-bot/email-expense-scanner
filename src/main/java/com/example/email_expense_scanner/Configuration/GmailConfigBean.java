@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner;
+package com.example.email_expense_scanner.Configuration;
 
 
 import com.google.api.client.auth.oauth2.Credential;

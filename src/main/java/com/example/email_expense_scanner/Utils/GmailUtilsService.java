@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner;
+package com.example.email_expense_scanner.Utils;
 
 
 import com.google.api.services.gmail.model.Message;
