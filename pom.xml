@@ -59,6 +59,19 @@
             <artifactId>google-api-services-gmail</artifactId>
             <version>v1-rev20250630-2.0.0</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.21.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>edu.stanford.nlp</groupId>
+            <artifactId>stanford-corenlp</artifactId>
+            <version>4.4.0</version>
+        </dependency>
     </dependencies>
 
 
