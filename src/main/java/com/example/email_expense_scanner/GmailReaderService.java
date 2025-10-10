@@ -20,7 +20,7 @@ public class GmailReaderService {
 
     public void listUnreadMessages() throws Exception {
         ListMessagesResponse response = gmail.users().messages().list("me")
-                .setQ("label:strava")
+                .setQ("Strava")
                 .setMaxResults(1L)
                 .execute();
 
