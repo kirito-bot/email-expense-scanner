@@ -44,7 +44,7 @@ public class GmailReaderService {
             logger.info("No unread emails found.");
             return;
         }
-        List<CompletableFuture<ExpenseModal.ExpenseResult>> future = new ArrayList<>();
+        List<CompletableFuture<ExpenseModal.ExpenseEntry>> future = new ArrayList<>();
 
         for (Message m : messages) {
             synchronized (this) {
@@ -54,33 +54,20 @@ public class GmailReaderService {
 
             String emailBody = gmailUtilsService.getEmailBody(fullMsg);
             logger.info("Email Body: ------------------------------------->" + emailBody);
-            future.add(findExpenseService.analyzeEmailAsync(emailBody));
+            future.add(findExpenseService.analyzeEmailAsync(emailBody, messagesProcessed));
         }
         CompletableFuture.allOf(future.toArray(new CompletableFuture[0])).join();
 
         // Gather results
-        List results = future.stream()
+        List<ExpenseModal.ExpenseEntry> results = future.stream()
                 .map(CompletableFuture::join).toList();
         logger.info("Total results: " + results.size());
         for (Object result : results) {
-            logger.info("TEST TEST \n" + result.toString() + "\n");
+            logger.info("TEST \n" + result.toString() + "\n");
         }
 
         asyncExecutor.shutdown();
 
-        //           Document document = Jsoup.parse(gmailUtilsService.getEmailBody(fullMsg));
-//            Element table = document.selectFirst("table");
-//
-//            for(Element row : table.select("tr")) {
-//                Elements cols = row.select("td");
-//                for (Element col : cols) {
-//
-//                }
-//            }
-//            logger.info("ID: " + m.getId() +
-//                    " | Subject: " + gmailUtilsService.getHeader(fullMsg, "SUBJECT") +
-//                    " | Body: " + gmailUtilsService.parseExpenseTable(gmailUtilsService.getEmailBody(fullMsg)));
-        // " | Clean Body: " + cleanBody);
 
     }
 }

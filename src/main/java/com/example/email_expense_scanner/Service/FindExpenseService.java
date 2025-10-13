@@ -3,8 +3,6 @@ package com.example.email_expense_scanner.Service;
 import com.example.email_expense_scanner.Modal.ExpenseModal;
 import com.example.email_expense_scanner.Service.DetectDataService.DetectNLPService;
 import com.example.email_expense_scanner.Service.DetectDataService.DetectRegexService;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -27,17 +25,13 @@ public class FindExpenseService {
     }
 
     @Async
-    public CompletableFuture<ExpenseModal.ExpenseResult> analyzeEmailAsync(String htmlBody) {
+    public CompletableFuture<ExpenseModal.ExpenseEntry> analyzeEmailAsync(String htmlBody, int messageNumber) {
         try {
-            Document doc = Jsoup.parse(htmlBody);
-            List<ExpenseModal.ExpenseEntry> entries = new ArrayList<>();
-            String text = htmlBody;
-            List<String> merchantList = detectMerchant(text);
-            List<String> amountList = detectAmount(text);
-            List<String> dateList = detectDate(text);
+            List<String> merchantList = detectMerchant(htmlBody);
+            List<String> amountList = detectAmount(htmlBody);
+            List<String> dateList = detectDate(htmlBody);
 
             logger.info("TOTAL found : " + dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
-
             for (String date1 : dateList) {
                 logger.info("Date found in email: " + date1);
             }
@@ -47,27 +41,22 @@ public class FindExpenseService {
             for (String amount1 : amountList) {
                 logger.info("Amount found in email: " + amount1);
             }
-
-
-//            if (!dateList.isEmpty() && !merchantList.isEmpty() && !amountList.isEmpty()) {
-//                entries.add(new ExpenseModal.ExpenseEntry(merchantList.getFirst(), amountList.getFirst(), dateList.getFirst()));
-//                logger.info("Expense entry created from first detected values.");
-//                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found." + entries.size() + " entries created.");
-//            } else {
-//                logger.info("No expense entries found in email.");
-//                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
-//            }
-            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseResult(entries));
+            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(merchantList, amountList, dateList, messageNumber));
         } catch (Exception e) {
 
             logger.severe("Error analyzing email: " + e.getMessage() + "\n" + e);
-            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseResult(List.of()));
+            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(null, null, null, messageNumber));
         }
     }
 
     private List<String> combineListAndRemoveDuplicates(List<String> list1, List<String> list2) {
-        Set<String> mergeSet = new java.util.HashSet<>(list1);
-        mergeSet.addAll(list2);
+        Set<String> mergeSet = new java.util.HashSet<>();
+        if (list1 != null) {
+            mergeSet.addAll(list1);
+        }
+        if (list2 != null) {
+            mergeSet.addAll(list2);
+        }
         return new ArrayList<>(mergeSet);
     }
 
