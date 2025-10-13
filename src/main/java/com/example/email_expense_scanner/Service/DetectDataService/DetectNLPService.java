@@ -7,18 +7,19 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Service
 public class DetectNLPService {
 
     private final StanfordCoreNLP pipeline;
-
     private static final Logger logger = Logger.getLogger(DetectNLPService.class.getName());
+
+    private static final Set<String> RELATIVE_DATE_WORDS = new HashSet<>(Arrays.asList(
+            "today", "tomorrow", "yesterday", "tonight", "now", "currently", "present",
+            "next", "last", "previous", "upcoming"
+    ));
 
     public DetectNLPService() {
         try {
@@ -31,51 +32,45 @@ public class DetectNLPService {
         }
     }
 
-    public String extractAbsoluteDate(String text) {
+    /**
+     * Extracts all absolute dates from the text (ignores relative words like today, tomorrow).
+     */
+    public List<String> extractAllDates(String text) {
+        List<String> dates = new ArrayList<>();
         Annotation document = new Annotation(text);
         pipeline.annotate(document);
 
-        StringBuilder nlpDate = new StringBuilder();
-
-        // List of relative date keywords to ignore
-        Set<String> relativeWords = new HashSet<>(Arrays.asList(
-                "today", "tomorrow", "yesterday",
-                "tonight", "now", "currently", "present",
-                "next", "last", "previous", "upcoming"
-        ));
+        StringBuilder currentDate = new StringBuilder();
 
         for (CoreMap sentence : document.get(CoreAnnotations.SentencesAnnotation.class)) {
             for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
                 String word = token.word();
                 String ner = token.get(CoreAnnotations.NamedEntityTagAnnotation.class);
 
-                if ("DATE".equalsIgnoreCase(ner)) {
-                    if (relativeWords.contains(word.toLowerCase())) {
-                        nlpDate.setLength(0);
-                        continue;
-                    }
-                    if (!nlpDate.isEmpty()) nlpDate.append(" ");
-                    nlpDate.append(word);
-                } else if (!nlpDate.isEmpty()) {
-                    // return the first accumulated NLP date
-                    logger.info("Absolute date found in text: " + nlpDate.toString().trim());
-                    return nlpDate.toString().trim();
+                if ("DATE".equalsIgnoreCase(ner) && !RELATIVE_DATE_WORDS.contains(word.toLowerCase())) {
+                    if (!currentDate.isEmpty()) currentDate.append(" ");
+                    currentDate.append(word);
+                } else if (!currentDate.isEmpty()) {
+                    dates.add(currentDate.toString().trim());
+                    currentDate.setLength(0);
                 }
             }
-            if (!nlpDate.isEmpty()) {
-                logger.info("Absolute date found in text: " + nlpDate.toString().trim());
-                return nlpDate.toString().trim();
+
+            if (!currentDate.isEmpty()) {
+                dates.add(currentDate.toString().trim());
+                currentDate.setLength(0);
             }
         }
-        logger.info("No absolute date found in text: " + text);
-        return null; // no absolute date found
+
+        logger.info("Detected dates: " + dates);
+        return dates.isEmpty() ? null : dates;
     }
 
     /**
-     * Extracts the first detected merchant/organization name.
-     * Returns null if none found.
+     * Extracts all merchant/organization names from the text.
      */
-    public String extractMerchant(String text) {
+    public List<String> extractAllMerchants(String text) {
+        List<String> merchants = new ArrayList<>();
         Annotation document = new Annotation(text);
         pipeline.annotate(document);
 
@@ -89,32 +84,27 @@ public class DetectNLPService {
                 if ("ORGANIZATION".equalsIgnoreCase(ner)) {
                     if (!currentOrg.isEmpty()) currentOrg.append(" ");
                     currentOrg.append(word);
-                } else {
-                    if (!currentOrg.isEmpty()) {
-                        String result = currentOrg.toString().trim();
-                        if (!result.isEmpty()) return result;
-                        currentOrg.setLength(0);
-                    }
+                } else if (!currentOrg.isEmpty()) {
+                    merchants.add(currentOrg.toString().trim());
+                    currentOrg.setLength(0);
                 }
             }
 
             if (!currentOrg.isEmpty()) {
-                String result = currentOrg.toString().trim();
-                if (!result.isEmpty()) {
-                    logger.info("Merchant/organization found in text: " + result);
-                    return result;
-                }
+                merchants.add(currentOrg.toString().trim());
+                currentOrg.setLength(0);
             }
         }
-        logger.info("No merchant/organization found in text: " + text);
-        return null;
+
+        logger.info("Detected merchants: " + merchants);
+        return merchants.isEmpty() ? null : merchants;
     }
 
     /**
-     * Extracts and returns the first detected money value (e.g., "$50", "Rs. 200", "USD 100.25").
-     * Returns null if none found.
+     * Extracts all money values from the text.
      */
-    public String extractMoney(String text) {
+    public List<String> extractAllMoney(String text) {
+        List<String> moneyValues = new ArrayList<>();
         Annotation document = new Annotation(text);
         pipeline.annotate(document);
 
@@ -128,28 +118,19 @@ public class DetectNLPService {
                 if ("MONEY".equalsIgnoreCase(ner)) {
                     if (!currentMoney.isEmpty()) currentMoney.append(" ");
                     currentMoney.append(word);
-                } else {
-                    if (!currentMoney.isEmpty()) {
-                        String result = currentMoney.toString().trim();
-                        if (!result.isEmpty()) return result;
-                        currentMoney.setLength(0);
-                    }
+                } else if (!currentMoney.isEmpty()) {
+                    moneyValues.add(currentMoney.toString().trim());
+                    currentMoney.setLength(0);
                 }
             }
 
-            // Handle end-of-sentence case
             if (!currentMoney.isEmpty()) {
-                String result = currentMoney.toString().trim();
-                if (!result.isEmpty()) {
-                    logger.info("Money value found in text: " + result);
-                    return result;
-                }
+                moneyValues.add(currentMoney.toString().trim());
+                currentMoney.setLength(0);
             }
         }
-        logger.info("No money value found in text: " + text);
-        return null; // No money value found
+
+        logger.info("Detected money values: " + moneyValues);
+        return moneyValues.isEmpty() ? null : moneyValues;
     }
-
 }
-
-

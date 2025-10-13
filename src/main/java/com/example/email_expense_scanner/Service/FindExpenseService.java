@@ -5,14 +5,13 @@ import com.example.email_expense_scanner.Service.DetectDataService.DetectNLPServ
 import com.example.email_expense_scanner.Service.DetectDataService.DetectRegexService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
@@ -32,68 +31,32 @@ public class FindExpenseService {
         try {
             Document doc = Jsoup.parse(htmlBody);
             List<ExpenseModal.ExpenseEntry> entries = new ArrayList<>();
-            List<String> merchantList = new ArrayList<>();
-            List<String> amountList = new ArrayList<>();
-            List<String> dateList = new ArrayList<>();
+            String text = htmlBody;
+            List<String> merchantList = detectMerchant(text);
+            List<String> amountList = detectAmount(text);
+            List<String> dateList = detectDate(text);
 
-            for (Element table : doc.select("table")) {
-                Elements rows = table.select("tr");
-                for (Element row : rows) {
-                    Elements cols = row.select("td");
-                    if (cols.isEmpty()) continue;
+            logger.info("TOTAL found : " + dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
 
-                    String text = cols.text();
-
-                    String merchant = detectMerchant(text);
-                    String amount = detectAmount(text);
-                    String date = detectDate(text);
-
-                    if (merchant != null) {
-                        merchantList.add(merchant);
-                    }
-                    if (amount != null) {
-                        amountList.add(amount);
-                    }
-                    if (date != null) {
-                        dateList.add(date);
-                    }
-                    logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
-
-                }
+            for (String date1 : dateList) {
+                logger.info("Date found in email: " + date1);
             }
-            for (String date : dateList) {
-                logger.info("Date found in email: " + date);
+            for (String merchant1 : merchantList) {
+                logger.info("Merchant found in email: " + merchant1);
             }
-            for (String merchant : merchantList) {
-                logger.info("Merchant found in email: " + merchant);
+            for (String amount1 : amountList) {
+                logger.info("Amount found in email: " + amount1);
             }
-            for (String amount : amountList) {
-                logger.info("Amount found in email: " + amount);
-            }
-            // Remove duplicates
 
-            dateList = this.removeDuplicates(dateList);
-            merchantList = this.removeDuplicates(merchantList);
-            amountList = this.removeDuplicates(amountList);
 
-//            for (String date : dateList) {
-//                for (String merchant : merchantList) {
-//                    for (String amount : amountList) {
-//                        entries.add(new ExpenseModal.ExpenseEntry(merchant, amount, date));
-//                    }
-//                }
+//            if (!dateList.isEmpty() && !merchantList.isEmpty() && !amountList.isEmpty()) {
+//                entries.add(new ExpenseModal.ExpenseEntry(merchantList.getFirst(), amountList.getFirst(), dateList.getFirst()));
+//                logger.info("Expense entry created from first detected values.");
+//                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found." + entries.size() + " entries created.");
+//            } else {
+//                logger.info("No expense entries found in email.");
+//                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
 //            }
-
-            if (!dateList.isEmpty() && !merchantList.isEmpty() && !amountList.isEmpty()) {
-                entries.add(new ExpenseModal.ExpenseEntry(merchantList.getFirst(), amountList.getFirst(), dateList.getFirst()));
-                logger.info("Expense entry created from first detected values.");
-                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found." + entries.size() + " entries created.");
-            } else {
-                logger.info("No expense entries found in email.");
-                logger.info(dateList.size() + " dates, " + merchantList.size() + " merchants, " + amountList.size() + " amounts found.");
-            }
-
-
             return CompletableFuture.completedFuture(new ExpenseModal.ExpenseResult(entries));
         } catch (Exception e) {
 
@@ -102,43 +65,29 @@ public class FindExpenseService {
         }
     }
 
-    private List<String> removeDuplicates(List<String> list) {
-        return new ArrayList<>(new java.util.HashSet<>(list));
+    private List<String> combineListAndRemoveDuplicates(List<String> list1, List<String> list2) {
+        Set<String> mergeSet = new java.util.HashSet<>(list1);
+        mergeSet.addAll(list2);
+        return new ArrayList<>(mergeSet);
     }
 
-    private String detectAmount(String text) {
+    private List<String> detectAmount(String text) {
 
-        String regexAmount = detectRegexService.detectAmount(text);
-        String nlpAmount = detectNLPService.extractMoney(text);
-        if (regexAmount != null) {
-            return nlpAmount;
-        } else if (nlpAmount != null) {
-            return regexAmount;
-        } else
-            return null;
+        List<String> regexAmount = detectRegexService.detectAmount(text);
+        List<String> nlpAmount = detectNLPService.extractAllMoney(text);
+        return combineListAndRemoveDuplicates(regexAmount, nlpAmount);
     }
 
-    private String detectDate(String text) {
-        String regexDate = detectRegexService.detectDate(text);
-        String nlpDate = detectNLPService.extractAbsoluteDate(text);
-
-        if (regexDate != null) {
-            return nlpDate;
-        } else if (nlpDate != null) {
-            return regexDate;
-        } else
-            return null;
+    private List<String> detectDate(String text) {
+        List<String> regexDate = detectRegexService.detectDate(text);
+        List<String> nlpDate = detectNLPService.extractAllDates(text);
+        return combineListAndRemoveDuplicates(regexDate, nlpDate);
     }
 
-    private String detectMerchant(String text) {
-        String regexMerchant = detectRegexService.detectMerchant(text);
-        String nlpMerchant = detectNLPService.extractMerchant(text);
-        if (regexMerchant != null) {
-            return nlpMerchant;
-        } else if (nlpMerchant != null) {
-            return regexMerchant;
-        } else
-            return null;
+    private List<String> detectMerchant(String text) {
+        List<String> regexMerchant = detectRegexService.detectMerchant(text);
+        List<String> nlpMerchant = detectNLPService.extractAllMerchants(text);
+        return combineListAndRemoveDuplicates(regexMerchant, nlpMerchant);
     }
 }
 

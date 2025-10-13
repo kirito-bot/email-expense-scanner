@@ -35,7 +35,7 @@ public class GmailReaderService {
     public void listUnreadMessages() throws Exception {
 
         ListMessagesResponse response = gmail.users().messages()
-                .list("me").setQ("label:chase")//.setMaxResults(1L)
+                .list("me").setQ("label:chase").setMaxResults(1L)
                 .execute();
 
         List<Message> messages = response.getMessages();
@@ -47,11 +47,13 @@ public class GmailReaderService {
         List<CompletableFuture<ExpenseModal.ExpenseResult>> future = new ArrayList<>();
 
         for (Message m : messages) {
-
-            logger.info("Processing message No : " + messagesProcessed);
+            synchronized (this) {
+                logger.info("Processing message No : " + messagesProcessed++);
+            }
             Message fullMsg = gmail.users().messages().get("me", m.getId()).setFormat("full").execute();
 
             String emailBody = gmailUtilsService.getEmailBody(fullMsg);
+            logger.info("Email Body: ------------------------------------->" + emailBody);
             future.add(findExpenseService.analyzeEmailAsync(emailBody));
         }
         CompletableFuture.allOf(future.toArray(new CompletableFuture[0])).join();
@@ -64,7 +66,6 @@ public class GmailReaderService {
             logger.info("TEST TEST \n" + result.toString() + "\n");
         }
 
-//                .forEach(result -> logger.info("TEST TEST \n"+result.toString() +"\n"));
         asyncExecutor.shutdown();
 
         //           Document document = Jsoup.parse(gmailUtilsService.getEmailBody(fullMsg));
