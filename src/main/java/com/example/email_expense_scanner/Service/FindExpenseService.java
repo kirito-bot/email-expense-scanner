@@ -25,7 +25,7 @@ public class FindExpenseService {
     }
 
     @Async
-    public CompletableFuture<ExpenseModal.ExpenseEntry> analyzeEmailAsync(String htmlBody, int messageNumber) {
+    public CompletableFuture<ExpenseModal.ExpenseEntry> analyzeEmailAsync(String htmlBody, String messageNumber) {
         try {
             List<String> merchantList = detectMerchant(htmlBody);
             List<String> amountList = detectAmount(htmlBody);
