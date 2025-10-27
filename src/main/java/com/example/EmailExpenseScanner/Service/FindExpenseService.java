@@ -1,8 +1,8 @@
-package com.example.email_expense_scanner.Service;
+package com.example.EmailExpenseScanner.Service;
 
-import com.example.email_expense_scanner.Modal.ExpenseModal;
-import com.example.email_expense_scanner.Service.DetectDataService.DetectNLPService;
-import com.example.email_expense_scanner.Service.DetectDataService.DetectRegexService;
+import com.example.EmailExpenseScanner.Modal.ExpenseModal;
+import com.example.EmailExpenseScanner.Service.DetectDataService.DetectNLPService;
+import com.example.EmailExpenseScanner.Service.DetectDataService.DetectRegexService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class FindExpenseService {
     }
 
     @Async
-    public CompletableFuture<ExpenseModal.ExpenseEntry> analyzeEmailAsync(String htmlBody, String messageNumber) {
+    public CompletableFuture<ExpenseModal.ExpenseEntry> analyzeEmailAsync(String htmlBody, String messageId) {
         try {
             List<String> merchantList = detectMerchant(htmlBody);
             List<String> amountList = detectAmount(htmlBody);
@@ -41,11 +41,11 @@ public class FindExpenseService {
             for (String amount1 : amountList) {
                 logger.info("Amount found in email: " + amount1);
             }
-            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(merchantList, amountList, dateList, messageNumber));
+            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(merchantList, amountList, dateList, messageId, htmlBody));
         } catch (Exception e) {
 
             logger.severe("Error analyzing email: " + e.getMessage() + "\n" + e);
-            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(null, null, null, messageNumber));
+            return CompletableFuture.completedFuture(new ExpenseModal.ExpenseEntry(null, null, null, messageId, htmlBody));
         }
     }
 

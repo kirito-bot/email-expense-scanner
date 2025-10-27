@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner.Configuration;
+package com.example.EmailExpenseScanner.Configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +12,8 @@ public class AsyncConfig {
     @Bean(name = "asyncExecutor")
     public ThreadPoolTaskExecutor asyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(16);
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-nlp-");
         executor.initialize();

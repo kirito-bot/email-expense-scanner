@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner.Utils;
+package com.example.EmailExpenseScanner.Utils;
 
 
 import com.google.api.services.gmail.model.Message;
@@ -17,7 +17,7 @@ public class GmailUtilsService {
     /**
      * Extracts the email body (plain text) from a Gmail Message, handling nested multiparts
      */
-    public  String getEmailBody(Message message) {
+    public String getEmailBody(Message message) {
         if (message == null || message.getPayload() == null) return null;
         return getHtmlBodyFromPart(message.getPayload());
     }

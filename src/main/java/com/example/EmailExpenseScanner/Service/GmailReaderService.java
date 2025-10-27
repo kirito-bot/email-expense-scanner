@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner.Service;
+package com.example.EmailExpenseScanner.Service;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.ListMessagesResponse;
@@ -40,7 +40,7 @@ public class GmailReaderService {
                 logger.info("No messages found in this batch.");
             }
             pageToken = response.getNextPageToken();
-            if (batch > 5) break; // Limit to 5 batches for testing
+            if (batch > 3) break; // Limit to 3 batches for testing
         } while (pageToken != null);
 
         asyncExecutor.shutdown();

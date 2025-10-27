@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner.Service.DetectDataService;
+package com.example.EmailExpenseScanner.Service.DetectDataService;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;

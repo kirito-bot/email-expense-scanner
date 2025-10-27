@@ -1,6 +1,6 @@
-package com.example.email_expense_scanner.Utils;
+package com.example.EmailExpenseScanner.Utils;
 
-import com.example.email_expense_scanner.Modal.ExpenseModal;
+import com.example.EmailExpenseScanner.Modal.ExpenseModal;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.stereotype.Service;
@@ -31,13 +31,15 @@ public class CSVWriterService {
              PrintWriter out = new PrintWriter(bw)) {
 
             if (!fileExists || file.length() == 0) {
-                out.println("Merchant,Date,Amount");
+                out.println("Merchant,Date,Amount,MessageNumber,Message");
             }
             for (ExpenseModal.ExpenseEntry entry : data) {
-                String row = String.format("%s,%s,%s",
+                String row = String.format("%s,%s,%s,%s,%s",
                         entry.merchant(),
                         entry.date(),
-                        entry.amount());
+                        entry.amount(),
+                        entry.messageNumber(),
+                        entry.message());
                 out.println(row);
             }
 

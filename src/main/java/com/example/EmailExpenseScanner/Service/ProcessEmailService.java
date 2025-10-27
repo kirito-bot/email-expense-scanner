@@ -1,8 +1,8 @@
-package com.example.email_expense_scanner.Service;
+package com.example.EmailExpenseScanner.Service;
 
-import com.example.email_expense_scanner.Modal.ExpenseModal;
-import com.example.email_expense_scanner.Utils.CSVWriterService;
-import com.example.email_expense_scanner.Utils.GmailUtilsService;
+import com.example.EmailExpenseScanner.Modal.ExpenseModal;
+import com.example.EmailExpenseScanner.Utils.CSVWriterService;
+import com.example.EmailExpenseScanner.Utils.GmailUtilsService;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
 import org.springframework.beans.factory.annotation.Autowired;

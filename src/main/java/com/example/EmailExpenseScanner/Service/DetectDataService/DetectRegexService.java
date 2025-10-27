@@ -1,4 +1,4 @@
-package com.example.email_expense_scanner.Service.DetectDataService;
+package com.example.EmailExpenseScanner.Service.DetectDataService;
 
 import org.springframework.stereotype.Service;
 
